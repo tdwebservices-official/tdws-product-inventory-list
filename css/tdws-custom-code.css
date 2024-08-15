@@ -1,0 +1,52 @@
+span.tdws-web-loader {
+    display: inline-block;
+    vertical-align: middle;
+    width: auto;
+    margin-left: 5px;
+    margin-top: 4px;
+}
+
+span.tdws-web-loader img {
+    max-width: 22px;
+    width: 100%;
+}
+span.tdws-web-loader.tdws-hide,.tdws-cnt-box.tdws-hide {
+    display: none;
+}
+.tdws-error-alert {
+    background: #fde8e8 !important;
+}
+.tdws-success-alert {
+    background: #d3e9d3 !important;
+}
+.tdws-product-inventory-list tbody#the-list td.column-id,.tdws-product-inventory-list thead th.column-id,
+.tdws-product-inventory-list tbody#the-list td.column-status,.tdws-product-inventory-list thead th.column-status,
+.tdws-product-inventory-list tbody#the-list td.column-sku,.tdws-product-inventory-list thead th.column-sku {
+    width: 100px;
+}
+
+.tdws-product-inventory-list tbody#the-list td.column-sku,.tdws-product-inventory-list thead th.column-name {
+    width: 250px;
+}
+
+.tdws-import-form-wrap {
+        margin: 20px 0;
+    padding: 20px;
+    background: #f6f7f7;
+}
+
+.tdws-import-form-wrap h2 {
+    margin-top: 0;
+}
+.tdws-import-form-wrap h3 {
+    margin-bottom: 0;
+}
+.tdws-success-cnt{
+    color: green;
+}
+.tdws-error-cnt{
+    color: red;
+}
+.tdws_web_link{
+    width: 100%;
+}
