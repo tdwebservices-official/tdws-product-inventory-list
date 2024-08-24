@@ -8,7 +8,8 @@ Plugin Name: TDWS Product Inventory List
 Plugin URI: https://tdwebservices.com/
 Description: This is used for product inventory facility addon.
 Author: TDWS Web Services
-Version: 1.0.1
+Requires Plugins: woocommerce
+Version: 1.0.2
 Author URI: https://tdwebservices.com/
 */
 
@@ -62,27 +63,24 @@ add_action( 'admin_init', 'tdws_add_custom_capability_to_all_roles' );
 
 function tdws_add_product_list_menu_option() {
 	?>
-	<style type="text/css">
-		span.tdws-weblink-box {
-			display: block;    		
-		}
-		span.tdws-weblink-box textarea {
-			display: block;
-			margin-bottom: 10px;
-			width: 100%;
-		}
-	</style>
 	<div class="wrap">
-		<h1>TDWS Product Inventory List</h1>
+		<h1><?php _e('TDWS Product Inventory List', 'tdws-product-inventory-list' ); ?></h1>
 
 		<div class="tdws-import-form-wrap">
 			<form method="post" method="post" class="tdws_import_form" enctype="multipart/form-data">
-				<h2>Import Data</h2>
+				<h2><?php _e('Import Data', 'tdws-product-inventory-list' ); ?></h2>
+				<div style="margin-bottom: 15px;">
+					<label><span><?php _e('Enter Import Item Per Page', 'tdws-product-inventory-list' ); ?> : </span><input type="number" placeholder="<?php _e('Enter Import Item Per Page', 'tdws-product-inventory-list' ); ?>" class="tdws_import_per_Item" value="5"></label>
+				</div>
 				<input type="file" accept=".csv" name="tdws_import_file" class="tdws_import_file">
 				<?php wp_nonce_field('importWebLinkNonce', 'TDWSType'); ?>
-				<button type="submit" class="button tdws_import_button">Import</button><span class="tdws-web-loader tdws-hide"><img src="<?php echo esc_url(plugin_dir_url( __FILE__ ).'/images/loader.gif'); ?>"/></span>
-				<p>Download Sample File Please, <a href="<?php echo plugin_dir_url( __FILE__ ).'/SampleWeblink.csv'; ?>" download>Click Here</a></p>
-				<h3 class="tdws-cnt-box tdws-hide">Records : <span class="tdws-success-cnt">Success: <span>0</span></span> / <span class="tdws-error-cnt">Error: <span>0</span></span></h3>
+				<button type="submit" class="button tdws_import_button"><?php _e('Import', 'tdws-product-inventory-list' ); ?></button><span class="tdws-web-loader tdws-hide"><img src="<?php echo esc_url(plugin_dir_url( __FILE__ ).'/images/loader.gif'); ?>"/></span>
+				<p><?php _e('Download Sample File Please,', 'tdws-product-inventory-list' ); ?> <a href="<?php echo plugin_dir_url( __FILE__ ).'/SampleVendorlink.csv'; ?>" download><?php _e('Click Here', 'tdws-product-inventory-list' ); ?></a></p>
+				<p>If you don't download sample file, you need to make 2 column. Column 1 Name : SKU/URL  And Column 2 Name : Vendor Links </p>
+				<h3 class="tdws-cnt-box tdws-hide"><?php _e('Records :', 'tdws-product-inventory-list' ); ?> <span class="tdws-success-cnt"><?php _e('Success:', 'tdws-product-inventory-list' ); ?> <span>0</span></span> / <span class="tdws-error-cnt"><?php _e('Error:', 'tdws-product-inventory-list' ); ?> <span>0</span></span></h3>
+				<p class="tdws_download_error tdws-hide"><?php _e('Download Error Data File Please,', 'tdws-product-inventory-list' ); ?> <a href="javascript:;" class="tdws_download_error_file"><?php _e('Click Here', 'tdws-product-inventory-list' ); ?></a></p>
+
+				<p class="tdws_download_success tdws-hide"><?php _e('Download Import Data File Please,', 'tdws-product-inventory-list' ); ?> <a href="javascript:;" class="tdws_download_success_file"><?php _e('Click Here', 'tdws-product-inventory-list' ); ?></a></p>
 			</form>
 		</div>
 
@@ -130,27 +128,49 @@ add_action( "wp_ajax_nopriv_tdws_save_web_link_by_file", "tdws_save_web_link_by_
 
 function tdws_save_web_link_by_file() {
 
-	$result_arr = array( 'type' => 'fail', 'msg' => 'Something Went Wrong' );
-
+	$result_arr = array( 'type' => 'fail', 'msg' => 'Something Went Wrong', 'items' => array() );
 	if ( !wp_verify_nonce( $_POST['nonce'], "tdwsCustomNonce")) {
-		$result_arr = array( 'type' => 'fail', 'msg' => 'No verify nonce' );
+		$result_arr = array( 'type' => 'fail', 'msg' => 'No verify nonce', 'items' => array() );
 		wp_send_json( $result_arr );
 	}   
 
 	$web_link_items = isset($_POST['web_link_items']) ? $_POST['web_link_items'] : array();	
-
-	$sku = isset($web_link_items[0]) ? $web_link_items[0] : '';
-	$post_id = tdws_by_get_product_by_sku( $sku );
-	if( $post_id ){
-		$tdws_web_link = isset($web_link_items[1]) ? tdws_remove_all_query_string( $web_link_items[1], 1 ) : '';	
-
-		update_post_meta( $post_id, "tdws_web_link", $tdws_web_link );
+	$data_obj = array();
+	if( $web_link_items ){
+		foreach ( $web_link_items as $key => $value_item ) {
+			$sku = isset($value_item[0]) ? $value_item[0] : '';
+			$post_id = tdws_by_get_product_by_sku( $sku );
+			if( $post_id ){
+				$tdws_web_link = isset($value_item[1]) ? tdws_remove_all_query_string( $value_item[1], 1 ) : '';	
+				update_post_meta( $post_id, "tdws_web_link", $tdws_web_link );
+				$data_obj[] = array( 'type' => 'success', 'link_item' => $value_item );
+			}else{
+				$update_flag = 0;
+				$sku = rtrim($sku, '/');
+				if( $sku ){
+					$sku_arr = explode( '/', $sku );	
+					if( is_array($sku_arr) ){
+						$product_slug = end( $sku_arr );	
+						if( $product_slug ){
+							$post_id = tdws_get_post_id_by_slug( $product_slug, 'product' );
+							if( $post_id ){
+								$tdws_web_link = isset($value_item[1]) ? tdws_remove_all_query_string( $value_item[1], 1 ) : '';	
+								update_post_meta( $post_id, "tdws_web_link", $tdws_web_link );								
+								$update_flag = 1;
+							}
+						}	
+					}					
+				}
+				if( $update_flag ){
+					$data_obj[] = array( 'type' => 'success', 'link_item' => $value_item );	
+				}else{
+					$data_obj[] = array( 'type' => 'error', 'link_item' => $value_item );
+				}				
+			}
+		}
 	}
-
-	$result_arr = array( 'type' => 'success', 'msg' => 'Save Web Url Successfully...' );
-
+	$result_arr = array( 'type' => 'success', 'msg' => 'Vendor Link Updated Successfully', 'items' => $data_obj );
 	wp_send_json( $result_arr );
-
 }
 
 
@@ -179,14 +199,14 @@ function tdws_import_read_web_link_data() {
 				$spreadsheet = $reader->load( $tdws_import_temp );
 				$productData = $spreadsheet->getActiveSheet()->toArray();
 				$col_head = isset($productData[0]) ? $productData[0] : array();
-				if( ( isset($col_head[0]) && $col_head[0] == 'SKU' ) && ( isset($col_head[1]) && $col_head[1] == 'Web Links' ) ){
+				if( ( isset($col_head[0]) && $col_head[0] == 'SKU/URL' ) && ( isset($col_head[1]) && $col_head[1] == 'Vendor Links' ) ){
 					if( is_array($productData) && count($productData) > 0 ){
 						unset($productData[0]);
 						$productData = array_values( $productData );
 					}				
 					$result_arr = array( 'type' => 'success', 'msg' => 'Read File Data Successfully', 'productData' => $productData );
 				}else{
-					$result_arr = array( 'type' => 'fail', 'msg' => 'Invalid file some data' );	
+					$result_arr = array( 'type' => 'fail', 'msg' => 'Invalid file columns, Make them proper, follow below instructions' );	
 				}				
 			} catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
 				$result_arr = array( 'type' => 'fail', 'msg' => 'Invalid file data file' );
@@ -247,7 +267,7 @@ function tdws_vendor_link_box_html( $post ){
 	$tdws_web_link = get_post_meta( $post_id, 'tdws_web_link', true );	
 	?>		
 	<div class="tdws-vendor-link-wrap">
-		<label for="tdws_web_link"><strong><?php _e( 'Web Links', 'tdws-product-inventory-list' ); ?></strong></label>
+		<label for="tdws_web_link"><strong><?php _e( 'Vendor Links', 'tdws-product-inventory-list' ); ?></strong></label>
 		<textarea id="tdws_web_link" name="tdws_web_link" class="tdws_web_link"><?php echo $tdws_web_link; ?></textarea>
 		<?php wp_nonce_field( 'tdws_vendor_link_save', 'tdws_vendor_link_save_field' ); ?>			
 	</div>
@@ -278,4 +298,12 @@ function save_tdws_vendor_link_box( $post_id ) {
 
 	}
 
+}
+
+function tdws_get_post_id_by_slug( $slug, $post_type = 'post' ) {
+    // Use get_page_by_path to get the post object by slug
+	$post = get_page_by_path($slug, OBJECT, $post_type);
+	$p_id = isset($post->ID) ?  $post->ID : 0;
+    // Return the ID if the post exists
+	return $p_id;
 }
