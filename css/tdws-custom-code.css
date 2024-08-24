@@ -29,8 +29,17 @@ span.tdws-web-loader.tdws-hide,.tdws-cnt-box.tdws-hide {
     width: 250px;
 }
 
+span.tdws-weblink-box {
+    display: block;         
+}
+span.tdws-weblink-box textarea {
+    display: block;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
 .tdws-import-form-wrap {
-        margin: 20px 0;
+    margin: 20px 0;
     padding: 20px;
     background: #f6f7f7;
 }
@@ -49,4 +58,8 @@ span.tdws-web-loader.tdws-hide,.tdws-cnt-box.tdws-hide {
 }
 .tdws_web_link{
     width: 100%;
+}
+.tdws-table-wrap table {
+    text-align: left;
+    border-collapse: collapse;
 }
