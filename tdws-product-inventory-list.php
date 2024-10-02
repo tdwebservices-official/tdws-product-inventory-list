@@ -9,7 +9,7 @@ Plugin URI: https://tdwebservices.com/
 Description: This is used for product inventory facility addon.
 Author: TDWS Web Services
 Requires Plugins: woocommerce
-Version: 1.0.3
+Version: 1.0.4
 Author URI: https://tdwebservices.com/
 */
 
@@ -35,7 +35,7 @@ function tdws_add_inventory_script_admin_side() {
 	$tdws_screen    = get_current_screen();
 	$tdws_screen_id = isset($tdws_screen->id) ? $tdws_screen->id : '';
 
-	if ( $tdws_screen_id == 'admin_page_tdws-user-tracking' ) {
+	if ( $tdws_screen_id == 'admin_page_tdws-user-tracking' || $tdws_screen_id == 'tdws_page_tdws-user-tracking' ) {
 		wp_enqueue_style( 'woocommerce_admin_styles' );
 		wp_enqueue_style( 'jquery-ui-style' );
 		wp_enqueue_style( 'wp-color-picker' );
@@ -52,6 +52,7 @@ add_action( 'admin_enqueue_scripts', 'tdws_add_inventory_script_admin_side' );
 add_filter( 'woocommerce_reports_screen_ids', 'tdws_custom_wc_reports_user_tracking_screen_ids', 11, 1 );
 function tdws_custom_wc_reports_user_tracking_screen_ids( $screen_id_list ){
 	$screen_id_list[] = 'admin_page_tdws-user-tracking';
+	$screen_id_list[] = 'tdws_page_tdws-user-tracking';
 	return $screen_id_list;
 }
 
@@ -343,95 +344,10 @@ function save_tdws_vendor_link_box( $post_id ) {
 
 }
 
-add_action( 'wp_insert_post', 'tdws_user_tracking_while_create_product', 10, 3 );
-
-function tdws_user_tracking_while_create_product( $post_id, $post, $update ){
-
-	if( $update ){
-		return;
-	}
-	
-	if( get_option( 'tdws_update_inventory_table' ) != 'yes' ){
-		update_option( 'tdws_update_inventory_table', 'yes' );
-		tdws_inventory_tracking_statusDB();
-	}	
-
-
-	$defualt_timezone = wp_timezone()->getName();
-	$defualt_timezone = apply_filters( 'set_tdws_inventory_custom_timezone', $defualt_timezone );
-	if( !empty( $defualt_timezone ) ){
-		date_default_timezone_set( $defualt_timezone );
-	}
-
-	global $wpdb;	
-	$current_user_id = get_current_user_id();
-	$tdws_inv_table1 = $wpdb->prefix . 'tdws_user_tracking';
-
-	$tdws_user_tracking_row = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $tdws_inv_table1 WHERE product_id=%d", $post_id ) );					
-	if( is_array($tdws_user_tracking_row) && count($tdws_user_tracking_row) == 0 ){
-		$tdws_user_tracking_arr = array(					
-			'user_id' => $current_user_id,
-			'product_id' => $post_id,		
-			'status' => 0,		
-			'create_date' => date( 'Y-m-d H:i:s' ),
-			'update_date' => date( 'Y-m-d H:i:s' ),
-		);					
-		$tdws_trackingData = array();
-		$tb1_ub_format = array( '%d', '%d', '%d', '%s', '%s' );		
-		$wpdb->insert(
-			$tdws_inv_table1, $tdws_user_tracking_arr, 
-			$tb1_ub_format
-		);
-		$twds_user_tracking_id = $wpdb->insert_id;			
-		if( $twds_tracking_id == 0 ){
-			add_post_meta( $post_id, 'tdws_user_tracking_log', date( 'Y-m-d H:i:s' ) );
-		}
-	}
-}
-
-add_action( 'upgrader_process_complete', 'tdws_inventory_after_upgrade_function_load', 99, 2 );
-function tdws_inventory_after_upgrade_function_load(  $upgrader_object, $options ){
-	$current_plugin_path_name = plugin_basename( __FILE__ );
-	if ($options['action'] == 'update' && $options['type'] == 'plugin' ) {
-		foreach($options['plugins'] as $each_plugin) {
-			if ( $each_plugin == $current_plugin_path_name ) {
-
-				/* Version 1.1.0 */
-				tdws_inventory_tracking_statusDB();
-
-			}
-		}
-	}
-}
-
-
 function tdws_get_post_id_by_slug( $slug, $post_type = 'post' ) {
     // Use get_page_by_path to get the post object by slug
 	$post = get_page_by_path($slug, OBJECT, $post_type);
 	$p_id = isset($post->ID) ?  $post->ID : 0;
     // Return the ID if the post exists
 	return $p_id;
-}
-
-function tdws_inventory_tracking_statusDB(){
-	global $wpdb;			
-	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-	$tdws_inv_table1 = $wpdb->prefix . 'tdws_user_tracking';		
-	// Prepare the SQL query with placeholders
-	$tdws_inv_table1_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $tdws_inv_table1 ) );   // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQLPlaceholders.QuotedSimplePlaceholder	
-	#Check to see if the table exists already, if not, then create it
-	if ( $tdws_inv_table1_exists != $tdws_inv_table1 ) {
-
-		$tdws_sql_3 = "CREATE TABLE $tdws_inv_table1 (
-			`id` int(11) NOT NULL AUTO_INCREMENT,
-			`product_id` int(11) DEFAULT 0,
-			`user_id` int(11) DEFAULT 0,			
-			`status` int(11) DEFAULT 0,
-			`create_date` datetime DEFAULT CURRENT_TIMESTAMP NULL,
-			`update_date` datetime DEFAULT CURRENT_TIMESTAMP NULL,
-			PRIMARY KEY  (id)
-		) $charset_collate;";
-
-		dbDelta( $tdws_sql_3 );
-	}
 }
