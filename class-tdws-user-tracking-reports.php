@@ -69,8 +69,7 @@ class Tdws_User_Tracking_Report extends WC_Admin_Report {
 		if( $this->report_data->tdws_user_status_data ){
 			foreach ( $this->report_data->tdws_user_status_data as $c_key => $c_value ) {
 
-				$chart_result = $wpdb->get_results( $wpdb->prepare( "SELECT COUNT(id) as track_cnt, DATE(post_date) as post_date FROM $table_name WHERE post_status = 'publish' AND post_author  = ".$c_key." GROUP BY post_author" ) );	
-
+				$chart_result = $wpdb->get_results( $wpdb->prepare( "SELECT COUNT(id) as track_cnt, DATE(post_date) as post_date FROM $table_name WHERE post_type = 'product' and post_status = 'publish' AND post_author  = ".$c_key."  GROUP BY post_date" ) );	   
 
 				$all_tdws_rearrage_data = $this->prepare_chart_data( $chart_result, 'post_date', 'track_cnt', $this->chart_interval, $this->start_date, $this->chart_groupby );
 
