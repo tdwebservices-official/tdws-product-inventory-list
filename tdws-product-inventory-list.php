@@ -9,7 +9,7 @@ Plugin URI: https://tdwebservices.com/
 Description: This is used for product inventory facility addon.
 Author: TDWS Web Services
 Requires Plugins: woocommerce
-Version: 1.0.4
+Version: 1.0.5
 Author URI: https://tdwebservices.com/
 */
 
@@ -60,21 +60,23 @@ if (!class_exists('WP_List_Table')) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
+include 'class-tdws-analysis-posts-taxonomy.php';
+
 // Register the admin menu
 add_action('admin_menu', 'tdws_add_product_list_menu');
 
 function tdws_add_product_list_menu() {	
 	add_submenu_page( 'tdws_order_tracking', __( 'TDWS Product Inventory', 'tdws-product-inventory-list' ), __( 'TDWS Product Inventory', 'tdws-product-inventory-list' ), 'view_tdws_product_inventory', 'tdws-product-inventory', 'tdws_add_product_list_menu_option' );
 	add_submenu_page( 'tdws_order_tracking', __( 'TDWS User Tracking', 'tdws-product-inventory-list' ), __( 'TDWS User Tracking', 'tdws-product-inventory-list' ), 'administrator', 'tdws-user-tracking', 'tdws_user_tracking_report_page' );
+	add_submenu_page( 'tdws_order_tracking', __( 'TDWS Posts & Taxonomy Analysis', 'tdws-product-inventory-list' ), __( 'TDWS Posts & Taxonomy Analysis', 'tdws-product-inventory-list' ), 'view_tdws_post_taxonomy_analysis', 'tdws-tdws-post-taxonomy-analysis', 'tdws_post_taxonomy_analysis_page' );
 }
 
 function tdws_add_custom_capability_to_all_roles() {
-    // Define the custom capability
-	$tdws_capability = 'view_tdws_product_inventory';
     // Optionally add the capability to Administrators as well, if needed
 	$tdws_admin_role = get_role( 'administrator' );
 	if ( $tdws_admin_role ) {
-		$tdws_admin_role->add_cap( $tdws_capability );
+		$tdws_admin_role->add_cap( 'view_tdws_product_inventory' );
+		$tdws_admin_role->add_cap( 'view_tdws_post_taxonomy_analysis' );
 	}
 }
 add_action( 'admin_init', 'tdws_add_custom_capability_to_all_roles' );
