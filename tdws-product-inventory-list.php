@@ -9,7 +9,7 @@ Plugin URI: https://tdwebservices.com/
 Description: This is used for product inventory facility addon.
 Author: TDWS Web Services
 Requires Plugins: woocommerce
-Version: 1.0.5
+Version: 1.0.6
 Author URI: https://tdwebservices.com/
 */
 
@@ -353,3 +353,46 @@ function tdws_get_post_id_by_slug( $slug, $post_type = 'post' ) {
     // Return the ID if the post exists
 	return $p_id;
 }
+
+
+add_filter( 'woocommerce_shortcode_products_query', 'tdws_woocommerce_shortcode_products_orderby', 999, 3 );
+
+function tdws_woocommerce_shortcode_products_orderby( $args, $attributes, $type ) {
+
+	if( isset( $attributes['min_price'] ) && !empty( $attributes['min_price'] ) ) {
+        $args['meta_query'][] = array(
+            'key'     => '_price', // WooCommerce uses '_price' for the product price
+            'value'   => $attributes['min_price'],
+            'compare' => '>=', // Greater than or equal to min_price
+            'type'    => 'NUMERIC'
+        );
+    }
+
+    // Check if max_price is set and not empty
+    if( isset( $attributes['max_price'] ) && !empty( $attributes['max_price'] ) ) {
+        $args['meta_query'][] = array(
+            'key'     => '_price', // WooCommerce uses '_price' for the product price
+            'value'   => $attributes['max_price'],
+            'compare' => '<=', // Less than or equal to max_price
+            'type'    => 'NUMERIC'
+        );
+    }
+
+
+	return $args;
+}
+
+// Define a custom filter to modify the default shortcode attributes
+function tdws_modify_product_attributes( $out, $pairs, $atts, $shortcode ) {
+
+	if( isset($atts['min_price']) ){
+		$out['min_price'] = $atts['min_price'];
+	}
+
+	if( isset($atts['max_price']) ){
+		$out['max_price'] = $atts['max_price'];
+	}
+
+	return $out;
+}
+add_filter('shortcode_atts_products', 'tdws_modify_product_attributes', 10, 4);

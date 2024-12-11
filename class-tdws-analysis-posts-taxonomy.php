@@ -74,6 +74,12 @@ function export_taxonomy_terms_to_csv() {
             'hide_empty' => false,
         ));
 
+        $parent_terms = get_terms(array(
+            'taxonomy' => $taxonomy_name,
+            'parent' => 0,
+            'hide_empty' => false,
+        ));
+
         $only_level_taxonomies = array('category', 'product_cat');
         $output = fopen('php://output', 'w');
         // Set headers for CSV download
@@ -87,9 +93,9 @@ function export_taxonomy_terms_to_csv() {
             fputcsv($output, array('Term Name', 'Count'));
         }
 
-        if (!is_wp_error($terms) && !empty($terms)) {
+        if (!is_wp_error($parent_terms) && !empty($parent_terms)) {
             // Loop through terms and generate CSV rows
-            foreach ($terms as $term) {
+            foreach ($parent_terms as $term) {
                 // For tags or non-hierarchical taxonomies, directly write to CSV
                 if (!in_array($taxonomy_name, $only_level_taxonomies) ) {
                     // If it's a tag or a non-hierarchical term, output it directly
